@@ -363,8 +363,8 @@ jobs:
       - name: List distributions
         run: ls -la dist/
 
-      - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+      - name: "Publish to PyPI (fork test - simulated success)"
+        run: echo "skip real upload"
 
       - name: Publish GitHub release
         env:
@@ -424,8 +424,8 @@ jobs:
       - name: List distributions
         run: ls -la dist/
 
-      - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+      - name: "Publish to PyPI (fork test - simulated failure)"
+        run: exit 1
 
       - name: Publish GitHub release
         env:
@@ -442,7 +442,7 @@ jobs:
   docs-rtc:
     name: Build RTC docs
     needs: [detect, publish-rtc]
-    if: needs.detect.outputs.rtc == 'true'
+    if: false  # FORK TEST: no docs deploy
     uses: ./.github/workflows/build-docs.yml
     with:
       package_dir: livekit-rtc
@@ -452,7 +452,7 @@ jobs:
   docs-api:
     name: Build API docs
     needs: [detect, publish-api]
-    if: needs.detect.outputs.api == 'true'
+    if: false  # FORK TEST: no docs deploy
     uses: ./.github/workflows/build-docs.yml
     with:
       package_dir: livekit-api
@@ -462,7 +462,7 @@ jobs:
   docs-protocol:
     name: Build Protocol docs
     needs: [detect, publish-protocol]
-    if: needs.detect.outputs.protocol == 'true'
+    if: false  # FORK TEST: no docs deploy
     uses: ./.github/workflows/build-docs.yml
     with:
       package_dir: livekit-protocol
