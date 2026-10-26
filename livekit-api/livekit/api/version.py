@@ -1,2 +1,2 @@
-__version__ = "9.10.0.rc2"
+__version__ = "9.10.0"
 # fork test
