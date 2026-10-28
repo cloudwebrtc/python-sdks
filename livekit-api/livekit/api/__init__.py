@@ -86,3 +86,4 @@ __all__ = [
 # fork test: shared helper
 # fork test: Feature A (rc retention test)
 # fork test: Fix B (rc retention test)
+# fork test: Promote 1.4.0 to stable (rc retention test)
