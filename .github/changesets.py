@@ -12,7 +12,8 @@ A changeset looks like:
 Supported bump types: patch, minor, major, patch-rc, minor-rc, major-rc,
 next-rc, promote. When several changesets touch the same package, the
 largest bump wins (an explicit X-rc wins over next-rc). Mixing stable and
-rc bumps, or combining promote with anything else, is an error.
+rc bumps, or combining promote with anything else, is an error. While a
+package is at an rc, only next-rc and promote are accepted for it.
 
 Changesets used by an rc release are kept and recorded in .changeset/pre.json
 (package -> file names) instead of being deleted, so later runs skip them. The
@@ -101,6 +102,13 @@ def validate(package: str, kind: str) -> None:
         raise click.ClickException(f"{package}: next-rc requires an rc version (got {cur})")
     if kind == "promote" and not cur.is_prerelease:
         raise click.ClickException(f"{package}: promote requires a pre-release (got {cur})")
+    # Any other bump would move past the rc's planned stable version, e.g.
+    # patch on 1.4.0.rc1 releases 1.4.1 and 1.4.0 never ships.
+    if cur.is_prerelease and kind not in ("next-rc", "promote"):
+        raise click.ClickException(
+            f"{package}: {kind} is not allowed while at pre-release {cur}; "
+            "use next-rc or promote (or the Manual Version Bump workflow)"
+        )
 
 
 def apply(package: str, kind: str) -> None:
@@ -153,9 +161,6 @@ def kept_entries(names: list[str], package: str, repo: str | None) -> list[str]:
     entries = []
     for name in names:
         path = CHANGESET_DIR / name
-        if not path.exists():
-            click.echo(f"warning: kept changeset {path} is missing", err=True)
-            continue
         bumps, summary = parse_changeset(path)
         if summary and package in bumps:
             entries.append(f"`{bumps[package]}` {summary}{changeset_origin(path, repo)}")
@@ -190,6 +195,17 @@ def kept_entries(names: list[str], package: str, repo: str | None) -> list[str]:
 def main(rc_only: bool, notes: pathlib.Path | None, repo: str | None, check: bool) -> None:
     pre: dict[str, list[str]] = json.loads(PRE_STATE.read_text()) if PRE_STATE.exists() else {}
     kept = {name for names in pre.values() for name in names}
+    # A kept changeset still owes its entry to the stable release notes.
+    missing = sorted(name for name in kept if not (CHANGESET_DIR / name).exists())
+    if missing:
+        raise click.ClickException(
+            f"changesets kept from rc releases are missing: {missing} "
+            f"(restore them, or remove them from {PRE_STATE} on purpose)"
+        )
+    # Parse them now too, so a broken kept changeset fails the PR check
+    # instead of the stable release.
+    for name in sorted(kept):
+        parse_changeset(CHANGESET_DIR / name)
     files = sorted(
         p
         for p in CHANGESET_DIR.glob("*.md")
