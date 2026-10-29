@@ -1,5 +1,5 @@
 ---
-"livekit-api": patch
+"livekit-api": next-rc
 ---
 
 Contributor fix
