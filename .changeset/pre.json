@@ -1,5 +1,6 @@
 {
   "livekit-api": [
-    "rc-guard-a.md"
+    "rc-guard-a.md",
+    "stale-x.md"
   ]
 }
